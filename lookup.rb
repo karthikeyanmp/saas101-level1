@@ -15,27 +15,24 @@ domain = get_command_line_argument
 dns_raw = File.readlines("zone")
 
 def parse_dns(dns_raw)
-  dns_records = Hash.new
-  dns_raw.each do |line|
-    if !line.start_with? "#" and line != nil
-      record = line.strip.delete(" ").split ","
-      dns_records[record[1].strip] = record if record.length == 3
-    end
-  end
+  dns_records = {}
+  dns_raw.
+    reject { |line| line.empty? }.
+    map { |line| line.strip.split(", ") }.
+    reject { |record| record.length < 3 }.
+    each { |record| dns_records[record[1]] = { :type => record[0], :target => record[2] } }
   dns_records
 end
 
 def resolve(dns_records, lookup_chain, domain)
-
-  #dns_records.each do |r|
-
+  #puts dns_records
   record = dns_records[domain] if dns_records.has_key? domain
-
-  if record != nil and record[0] == "A"
-    lookup_chain << record[2]
-  elsif record != nil and record[0] == "CNAME"
-    lookup_chain << record[2]
-    lookup_chain = resolve(dns_records, lookup_chain, record[2])
+  #puts record
+  if record != nil and record[:type] == "A"
+    lookup_chain << record[:target]
+  elsif record != nil and record[:type] == "CNAME"
+    lookup_chain << record[:target]
+    lookup_chain = resolve(dns_records, lookup_chain, record[:target])
   else
     lookup_chain.delete domain
     lookup_chain << "Error: Record not found for " + domain
