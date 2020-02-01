@@ -1,8 +1,4 @@
 def get_command_line_argument
-  # ARGV is an array that Ruby defines for us,
-  # which contains all the arguments we passed to it
-  # when invoking the script from the command line.
-  # https://docs.ruby-lang.org/en/2.4.0/ARGF.html
   if ARGV.empty?
     puts "Usage: ruby lookup.rb <domain>"
     exit
@@ -19,38 +15,36 @@ domain = get_command_line_argument
 dns_raw = File.readlines("zone")
 
 def parse_dns(dns_raw)
-	dns_records = Hash.new
-	dns_raw.each do |line|
-		if !line.start_with?"#" and line!=nil
-			record = line.strip.delete(' ').split ","
-			dns_records[record[1].strip] = record if record.length==3
-		end
-	end
-	dns_records
+  dns_records = Hash.new
+  dns_raw.each do |line|
+    if !line.start_with? "#" and line != nil
+      record = line.strip.delete(" ").split ","
+      dns_records[record[1].strip] = record if record.length == 3
+    end
+  end
+  dns_records
 end
 
 def resolve(dns_records, lookup_chain, domain)
 
-	#dns_records.each do |r|
-		
-		record = dns_records[domain] if dns_records.has_key? domain
-		
-		if record!=nil and record[0] == "A"
-			lookup_chain << record[2]
-			
-		elsif record!=nil and record[0] == "CNAME"
-			lookup_chain << record[2]
-			lookup_chain=resolve(dns_records, lookup_chain, record[2])
-			
-		else
-			lookup_chain.delete domain
-			lookup_chain << "Error: Record not found for "+domain
-		end
-		
-	#end	
-		
-	
+  #dns_records.each do |r|
+
+  record = dns_records[domain] if dns_records.has_key? domain
+
+  if record != nil and record[0] == "A"
+    lookup_chain << record[2]
+  elsif record != nil and record[0] == "CNAME"
+    lookup_chain << record[2]
+    lookup_chain = resolve(dns_records, lookup_chain, record[2])
+  else
+    lookup_chain.delete domain
+    lookup_chain << "Error: Record not found for " + domain
+  end
+
+  #end
+
 end
+
 # ..
 # ..
 # FILL YOUR CODE HERE
